@@ -441,7 +441,6 @@ elif page == "Rapport technique":
         with open(pdf_file_path, "rb") as f:
             pdf_bytes = f.read()
 
-        # Bouton de téléchargement
         st.download_button(
             label="⬇️ Télécharger le rapport technique (PDF)",
             data=pdf_bytes,
@@ -452,33 +451,18 @@ elif page == "Rapport technique":
 
         st.markdown("---")
 
-        # Affichage page par page en haute définition
-        try:
-            import pypdfium2 as pdfium
-            
-            pdf = pdfium.PdfDocument(pdf_file_path)
-            num_pages = len(pdf)
-
-            # Option : sélection de page ou affichage complet
-            for page_idx in range(num_pages):
-                page_obj = pdf.get_page(page_idx)
-                pil_image = page_obj.render(scale=2.0).to_pil()  # Rendu net 2x DPI
-                st.image(
-                    pil_image, 
-                    caption=f"Page {page_idx + 1} / {num_pages}", 
-                    use_container_width=True
-                )
-                if page_idx < num_pages - 1:
-                    st.markdown("<hr style='margin: 1.5rem 0; border-color: #334155;'>", unsafe_allow_html=True)
-                    
-        except ImportError:
-            # Fallback direct HTML si pypdfium2 n'est pas encore installé
-            base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-            st.markdown(
-                f'<embed src="data:application/pdf;base64,{base64_pdf}#toolbar=1" width="100%" height="950px" type="application/pdf">',
-                unsafe_allow_html=True
-            )
-            st.info("💡 Pour un affichage plus fluide, installez pypdfium2 : `pip install pypdfium2`")
+        # Lecteur PDF universel via base64 embed
+        base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
+        pdf_display = f'''
+        <iframe 
+            src="data:application/pdf;base64,{base64_pdf}#view=FitH" 
+            width="100%" 
+            height="1000px" 
+            type="application/pdf"
+            style="border: none; border-radius: 8px;">
+        </iframe>
+        '''
+        st.markdown(pdf_display, unsafe_allow_html=True)
 
     else:
         st.warning(
