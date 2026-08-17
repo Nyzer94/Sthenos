@@ -13,8 +13,6 @@ import matplotlib as mpl
 # CONFIGURATION GLOBALE
 # ==============================================================================
 
-# URL brute GitHub du rapport LaTeX (à adapter selon votre dépôt)
-# Format : https://raw.githubusercontent.com/<user>/<repo>/<branch>/<fichier.tex>
 GITHUB_RAW_TEX_URL = "https://github.com/Nyzer94/Sthenos/blob/main/rapport_sthenos.tex"
 
 st.set_page_config(
