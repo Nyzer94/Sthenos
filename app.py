@@ -422,10 +422,9 @@ elif page == "Rapport technique":
 
     st.title("Rapport technique & document de synthèse PDF")
     st.markdown(
-        "Consultez ou téléchargez le rapport d'ingénierie complet du projet STHENOS au format PDF."
+        "Consultez ou téléchargez le rapport d'ingénierie complet du projet STHENOS."
     )
 
-    # Recherche automatique du fichier PDF dans le projet
     pdf_file_path = find_file(
         "rapport_sthenos.pdf",
         "rapport_sthenos_final.pdf",
@@ -438,12 +437,11 @@ elif page == "Rapport technique":
 
     if pdf_file_path and os.path.exists(pdf_file_path):
         filename = os.path.basename(pdf_file_path)
-        st.success(f"Fichier PDF détecté : `{filename}`")
 
         with open(pdf_file_path, "rb") as f:
             pdf_bytes = f.read()
 
-        # 1. Bouton de téléchargement direct
+        # Bouton de téléchargement
         st.download_button(
             label="⬇️ Télécharger le rapport technique (PDF)",
             data=pdf_bytes,
@@ -454,19 +452,35 @@ elif page == "Rapport technique":
 
         st.markdown("---")
 
-        # 2. Rendu intégré robuste (Object + Fallback iFrame)
-        base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-        pdf_display = f"""
-        <object data="data:application/pdf;base64,{base64_pdf}" type="application/pdf" width="100%" height="950px">
-            <iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="950px" style="border:none;">
-                <p>Votre navigateur ne supporte pas l'affichage PDF direct. Utilisez le bouton de téléchargement ci-dessus.</p>
-            </iframe>
-        </object>
-        """
-        st.markdown(pdf_display, unsafe_allow_html=True)
+        # Affichage page par page en haute définition
+        try:
+            import pypdfium2 as pdfium
+            
+            pdf = pdfium.PdfDocument(pdf_file_path)
+            num_pages = len(pdf)
+
+            # Option : sélection de page ou affichage complet
+            for page_idx in range(num_pages):
+                page_obj = pdf.get_page(page_idx)
+                pil_image = page_obj.render(scale=2.0).to_pil()  # Rendu net 2x DPI
+                st.image(
+                    pil_image, 
+                    caption=f"Page {page_idx + 1} / {num_pages}", 
+                    use_container_width=True
+                )
+                if page_idx < num_pages - 1:
+                    st.markdown("<hr style='margin: 1.5rem 0; border-color: #334155;'>", unsafe_allow_html=True)
+                    
+        except ImportError:
+            # Fallback direct HTML si pypdfium2 n'est pas encore installé
+            base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
+            st.markdown(
+                f'<embed src="data:application/pdf;base64,{base64_pdf}#toolbar=1" width="100%" height="950px" type="application/pdf">',
+                unsafe_allow_html=True
+            )
+            st.info("💡 Pour un affichage plus fluide, installez pypdfium2 : `pip install pypdfium2`")
 
     else:
         st.warning(
-            "Aucun fichier PDF (`rapport_sthenos.pdf`) n'a été détecté dans le répertoire du projet.\n\n"
-            "Veuillez vérifier que le PDF compilé est bien placé à la racine du dossier."
+            "Aucun fichier PDF (`rapport_sthenos.pdf`) n'a été détecté dans le répertoire du projet."
         )
