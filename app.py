@@ -425,45 +425,48 @@ elif page == "Rapport technique":
         "Consultez ou téléchargez le rapport d'ingénierie complet du projet STHENOS au format PDF."
     )
 
-    # Fonction d'affichage du lecteur PDF intégré
-    def render_pdf_viewer(pdf_source):
-        if isinstance(pdf_source, str):
-            with open(pdf_source, "rb") as f:
-                pdf_bytes = f.read()
-        else:
-            pdf_bytes = pdf_source
-
-        base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-        pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="900" type="application/pdf" style="border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);"></iframe>'
-        st.markdown(pdf_display, unsafe_allow_html=True)
-        st.markdown("")
-        st.download_button(
-            label="Télécharger le rapport PDF",
-            data=pdf_bytes,
-            file_name="rapport_sthenos.pdf",
-            mime="application/pdf",
-            type="primary"
-        )
-
-    # Recherche automatique d'un fichier PDF existant
+    # Recherche automatique du fichier PDF dans le projet
     pdf_file_path = find_file(
         "rapport_sthenos.pdf",
-        "../rapport_sthenos.pdf",
-        "../../rapport_sthenos.pdf",
+        "rapport_sthenos_final.pdf",
+        "rapport_sthenos_ieee.pdf",
         "Projet_FEM___Modélisation (2).pdf",
-        "../Projet_FEM___Modélisation (2).pdf"
+        os.path.join("..", "rapport_sthenos.pdf"),
+        os.path.join("..", "Projet_FEM___Modélisation (2).pdf"),
+        os.path.join("Projet Python Poutre", "rapport_sthenos.pdf")
     )
 
-    uploaded_pdf = st.file_uploader("Charger un document PDF (optionnel)", type=["pdf"])
+    if pdf_file_path and os.path.exists(pdf_file_path):
+        filename = os.path.basename(pdf_file_path)
+        st.success(f"Fichier PDF détecté : `{filename}`")
 
-    if uploaded_pdf is not None:
-        st.success("Document PDF chargé depuis l'interface.")
-        render_pdf_viewer(uploaded_pdf.read())
-    elif pdf_file_path and os.path.exists(pdf_file_path):
-        st.info(f"Fichier PDF détecté : `{os.path.basename(pdf_file_path)}`")
-        render_pdf_viewer(pdf_file_path)
+        with open(pdf_file_path, "rb") as f:
+            pdf_bytes = f.read()
+
+        # 1. Bouton de téléchargement direct
+        st.download_button(
+            label="⬇️ Télécharger le rapport technique (PDF)",
+            data=pdf_bytes,
+            file_name=filename,
+            mime="application/pdf",
+            use_container_width=True
+        )
+
+        st.markdown("---")
+
+        # 2. Rendu intégré robuste (Object + Fallback iFrame)
+        base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
+        pdf_display = f"""
+        <object data="data:application/pdf;base64,{base64_pdf}" type="application/pdf" width="100%" height="950px">
+            <iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="950px" style="border:none;">
+                <p>Votre navigateur ne supporte pas l'affichage PDF direct. Utilisez le bouton de téléchargement ci-dessus.</p>
+            </iframe>
+        </object>
+        """
+        st.markdown(pdf_display, unsafe_allow_html=True)
+
     else:
         st.warning(
-            "Aucun fichier PDF (`rapport_sthenos.pdf`) n'a été automatiquement détecté dans le répertoire racine du projet.\n\n"
-            "Veuillez déposer votre fichier PDF compilé à l'aide du champ ci-dessus pour l'afficher directement dans le lecteur intégré."
+            "Aucun fichier PDF (`rapport_sthenos.pdf`) n'a été détecté dans le répertoire du projet.\n\n"
+            "Veuillez vérifier que le PDF compilé est bien placé à la racine du dossier."
         )
